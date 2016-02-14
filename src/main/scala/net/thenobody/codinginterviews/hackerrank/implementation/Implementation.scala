@@ -187,8 +187,253 @@ object Implementation {
     result.grouped(size).map(_.mkString).foreach(println)
   }
 
+  def manasaAndStones(): Unit = {
+    def go(n: Int, a: Int, b: Int): Seq[Int] = n match {
+      case _ if n == 1 => Seq(0)
+      case _ => go(n - 1, a, b).flatMap { last => Seq(last + a, last + b) }.distinct.sorted
+    }
+
+    val count = io.StdIn.readInt()
+    (0 until count).foreach { _ =>
+      val n = io.StdIn.readInt()
+      val a = io.StdIn.readInt()
+      val b = io.StdIn.readInt()
+      println(go(n, a, b).mkString(" "))
+    }
+  }
+
+  def libraryFine(): Unit = {
+    val (aDay, aMonth, aYear) = io.StdIn.readLine().split(' ') match { case Array(d, m, y) => (d.toInt, m.toInt, y.toInt) }
+    val (eDay, eMonth, eYear) = io.StdIn.readLine().split(' ') match { case Array(d, m, y) => (d.toInt, m.toInt, y.toInt) }
+
+    val aTimestamp = aYear * 10000 + aMonth * 100 + aDay
+    val eTimestamp = eYear * 10000 + eMonth * 100 + eDay
+
+    val dDiff = aDay - eDay
+    val mDiff = aMonth - eMonth
+    val yDiff = aYear - eYear
+
+    println(
+      if (aTimestamp <= eTimestamp) 0
+      else if (yDiff > 0) 10000
+      else if (mDiff > 0) mDiff * 500
+      else if (dDiff > 0) dDiff * 15
+    )
+  }
+
+  def acmIcpcTeam(): Unit = {
+    val (people, topics) = io.StdIn.readLine().split(' ') match { case Array(p, t) => (p.toInt, t.toInt) }
+    val skills = (0 until people).map(_ => io.StdIn.readLine().substring(0, topics))
+    val ranks = for {
+      i <- 0 until people
+      j <- i + 1 until people
+    } yield (0 until topics).count { t => skills(i)(t) == '1' || skills(j)(t) == '1' }
+
+    val max = ranks.max
+    println(max)
+    println(ranks.count(_ == max))
+  }
+
+  def extraLongFactorials(): Unit = {
+    def go(n: Int, acc: BigInt): BigInt = {
+      if (n == 0) acc
+      else go(n - 1, acc * n)
+    }
+    val n = io.StdIn.readInt()
+    println(go(n, 1))
+  }
+
+  def taumAndBDay(): Unit = {
+    val count = io.StdIn.readInt()
+    (0 until count).foreach { _ =>
+      val (bCount, wCount) = io.StdIn.readLine().split(' ') match { case Array(b, w) => (b.toLong, w.toLong) }
+      val (bCost, wCost, xCost) = io.StdIn.readLine().split(' ') match { case Array(b, w, x) => (b.toLong, w.toLong, x.toLong) }
+
+      println(
+        if (bCost + xCost < wCost) (bCount + wCount) * bCost + wCount * xCost
+        else if (wCost + xCost < bCost) (bCount + wCount) * wCost + bCount * xCost
+        else bCount * bCost + wCount * wCost
+      )
+    }
+  }
+
+  def theTimeInWords(): Unit = {
+    val numerals = Map(
+      1 -> "one",
+      2 -> "two",
+      3 -> "three",
+      4 -> "four",
+      5 -> "five",
+      6 -> "six",
+      7 -> "seven",
+      8 -> "eight",
+      9 -> "nine",
+      10 -> "ten",
+      11 -> "eleven",
+      12 -> "twelve",
+      13 -> "thirteen",
+      14 -> "fourteen",
+      15 -> "quarter",
+      16 -> "sixteen",
+      17 -> "seventeen",
+      18 -> "eighteen",
+      19 -> "nineteen",
+      20 -> "twenty",
+      30 -> "half"
+    )
+    val hours = io.StdIn.readInt()
+    val minutes = io.StdIn.readInt()
+
+    println(
+      (hours, minutes) match {
+        case _ if minutes == 0 => numerals(hours) + " o' clock"
+        case _ if minutes > 30 =>
+          val remaining = 60 - minutes
+          val mins = if (remaining > 20) numerals(remaining / 10 * 10) + " " + numerals(remaining % 10) + " minutes"
+          else if (remaining == 15) numerals(remaining)
+          else if (remaining == 1) numerals(remaining) + " minute"
+          else numerals(remaining) + " minutes"
+          mins + " to " + numerals(hours + 1)
+        case _ =>
+          val mins = if (minutes == 30) numerals(minutes)
+          else if (minutes > 20) numerals(minutes / 10 * 10) + " " + numerals(minutes % 10) + " minutes"
+          else if (minutes == 15) numerals(minutes)
+          else if (minutes == 1) numerals(minutes) + " minute"
+          else numerals(minutes) + " minutes"
+          mins + " past " + numerals(hours)
+      }
+    )
+  }
+
+  def modifiedKaprekarNumbers(): Unit = {
+    def isKaprekar(n: Long): Boolean = {
+      val digits = n.toString.length
+      val square = n * n
+      val right = square % Math.pow(10, digits).toLong
+      val left = square / Math.pow(10, digits).toLong
+      left + right == n
+    }
+
+    val lowest = io.StdIn.readLong()
+    val highest = io.StdIn.readLong()
+
+    println(
+      (lowest to highest).collect { case x if isKaprekar(x) => x } match {
+        case numbers if numbers.isEmpty => "INVALID RANGE"
+        case numbers  => numbers.mkString(" ")
+      }
+    )
+  }
+
+  def encryption(): Unit = {
+    val input = io.StdIn.readLine()
+    val length = input.length.toDouble
+    val square = Math.sqrt(length)
+    val columns = Math.min(Math.ceil(square), Math.ceil(length / square)).toInt
+
+    val split = input.grouped(columns).toList
+    val rows = split.size
+
+    println(
+      (for {
+        c <- 0 until columns
+        r <- 0 until rows
+        if c < split(r).length
+      } yield {
+        val space = if (c > 0 && r == 0) " " else ""
+        space + split(r)(c)
+      }).mkString
+    )
+  }
+
+  def matrixRotation(): Unit = {
+    def getDirection(x: Int, y: Int, width: Int, height: Int): (Int, Int) = {
+      val (xHalf, yHalf) = (width / 2.0, height / 2.0)
+      val xMin = 0
+      val xMax = width - 1
+      val yMin = 0
+      val yMax = height - 1
+
+      if (y < yHalf) {                           // upper half
+        if (x == xMin) (0, 1)                     // upper left corner OR bellow upper left corner
+        else if (y == yMin && x == xMax) (-1, 0)  // upper right corner
+        else if (x == xMax) (0, -1)               // below upper right corner
+        else (-1, 0)                              // to the right of upper left corner
+      } else {                                   // lower half
+        if (x == xMax) (0, -1)                    // lower right corner OR above lower right corner
+        else if (y == yMax && x == xMin) (1, 0)   // lower left corner
+        else if (x == xMin) (0, 1)                // above left corner
+        else (1, 0)                               // to the left of lower right corner
+      }
+    }
+
+    def getDirectionLevel(x: Int, y: Int, width: Int, height: Int, offset: Int): (Int, Int) = {
+      val (xHalf, yHalf) = (width / 2.0, height / 2.0)
+      val xMin = offset
+      val xMax = width - offset - 1
+      val yMin = offset
+      val yMax = height - offset - 1
+
+      if (y < yHalf) {                           // upper half
+        if (x == xMin) (0, 1)                     // upper left corner OR bellow upper left corner
+        else if (y == yMin && x == xMax) (-1, 0)  // upper right corner
+        else if (x == xMax) (0, -1)               // below upper right corner
+        else (-1, 0)                              // to the right of upper left corner
+      } else {                                   // lower half
+        if (x == xMax) (0, -1)                    // lower right corner OR above lower right corner
+        else if (y == yMax && x == xMin) (1, 0)   // lower left corner
+        else if (x == xMin) (0, 1)                // above left corner
+        else (1, 0)                               // to the left of lower right corner
+      }
+    }
+
+    type Matrix = Map[(Int, Int), String]
+
+    def rotateMatrix(matrix: Matrix, width: Int, height: Int, steps: Int): Matrix = steps match {
+      case 0 => matrix
+      case _ =>
+        rotateMatrix(matrix.map {
+          case ((x, y), value) if x == 0 ||  x == width - 1 || y == 0 || y == height - 1 =>
+            val (xDiff, yDiff) = getDirectionLevel(x, y, width, height, 0)
+            (x + xDiff, y + yDiff) -> value
+          case ((x, y), value) =>
+            val (xDiff, yDiff) = getDirectionLevel(x, y, width, height, 1)
+            (x + xDiff, y + yDiff) -> value
+        }, width, height, steps - 1)
+    }
+
+    def printMatrix(matrix: Map[(Int, Int), String], width: Int, height: Int): Unit = {
+      println(
+        (0 until height).map { y =>
+          (0 until width).map { x => matrix((x, y)) }.mkString(" ")
+        }.mkString("\n")
+      )
+    }
+
+    def buildMatrix(input: Seq[Seq[String]], width: Int, height: Int): Matrix = (for {
+      y <- 0 until height
+      x <- 0 until width
+    } yield (x, y) -> input(y)(x)).toMap
+
+    val input = Seq(
+      Seq("A", "B", "C", "D", "E", "F"),
+      Seq("P", "1", "2", "3", "4", "G"),
+      Seq("O", "8", "7", "6", "5", "H"),
+      Seq("N", "M", "L", "K", "J", "I")
+    )
+
+    val height = 4
+    val width = 6
+    val original = buildMatrix(input, width, height)
+    val rotated = rotateMatrix(original, width, height, 15)
+
+    printMatrix(original, width, height)
+    println()
+    printMatrix(rotated, width, height)
+  }
+
   def main(args: Array[String]): Unit = {
-    cavityMap()
+    matrixRotation()
   }
 
 }
