@@ -348,7 +348,7 @@ object Implementation {
 
   def matrixRotation(): Unit = {
     def getDirection(x: Int, y: Int, width: Int, height: Int, offset: Int): (Int, Int) = {
-      val (xHalf, yHalf) = (width / 2.0, height / 2.0)
+      val yHalf = height / 2.0
       val xMin = offset
       val xMax = width - offset - 1
       val yMin = offset
@@ -367,22 +367,30 @@ object Implementation {
       }
     }
 
+    def getRealSteps(width: Int, height: Int, offset: Int, steps: Long): Int = {
+      val fullCircleSteps = 2 * (width - 2 * offset + height - 2 * offset) - 4
+      (steps % fullCircleSteps).toInt
+    }
+
     def getOffset(x: Int, y: Int, width: Int, height: Int): Int = {
-      val flip = (n: Int, half: Int) => if (n < half) n else 2 * half - n - 1
-      Math.min(flip(x, width / 2), flip(y, height / 2))
+      val flip = (n: Int, half: Double) => if (n < half) n else (2 * half - n - 1).toInt
+      Math.min(flip(x, width / 2.0), flip(y, height / 2.0))
     }
 
     type Matrix = Map[(Int, Int), String]
 
-    def rotateMatrix(matrix: Matrix, width: Int, height: Int, steps: Int): Matrix = steps match {
+    def rotateMatrix(matrix: Matrix, width: Int, height: Int, steps: Long): Matrix = steps match {
       case 0 => matrix
       case _ =>
-        rotateMatrix(matrix.map {
-          case ((x, y), value) =>
-            val offset = getOffset(x, y, width, height)
-            val (xDiff, yDiff) = getDirection(x, y, width, height, offset)
-            (x + xDiff, y + yDiff) -> value
-        }, width, height, steps - 1)
+        matrix.map { case ((x, y), value) =>
+          val offset = getOffset(x, y, width, height)
+          val realSteps = getRealSteps(width, height, offset, steps)
+          val (xNew, yNew) = (0 until realSteps).foldLeft((x, y)) { case ((xLast, yLast), _) =>
+            val (xDiff, yDiff) = getDirection(xLast, yLast, width, height, offset)
+            (xLast + xDiff, yLast + yDiff)
+          }
+          (xNew, yNew) -> value
+        }
     }
 
     def printMatrix(matrix: Map[(Int, Int), String], width: Int, height: Int): Unit = println(
@@ -396,25 +404,9 @@ object Implementation {
       x <- 0 until width
     } yield (x, y) -> input(y)(x)).toMap
 
-    val input = Seq(
-      Seq("A", "B", "C", "D", "E", "F", "G", "H"),
-      Seq("X", "1", "2", "3", "4", "5", "6", "I"),
-      Seq("W", "7", "Q", "W", "E", "R", "7", "J"),
-      Seq("V", "6", "I", "U", "Y", "T", "8", "K"),
-      Seq("U", "5", "4", "3", "2", "1", "9", "L"),
-      Seq("T", "S", "R", "Q", "P", "O", "N", "M")
-    )
-
-    val width = 8
-    val height = 6
-    val original = buildMatrix(input, width, height)
-
-    printMatrix(original, width, height)
-    println()
-    printMatrix(original.map { case ((x, y), _) => (x, y) -> getOffset(x, y, width, height).toString }, width, height)
-    println()
-    val rotated = rotateMatrix(original, width, height, 3)
-    printMatrix(rotated, width, height)
+    val (height, width, rotations) = io.StdIn.readLine().split(' ') match { case Array(h, w, r) => (h.toInt, w.toInt, r.toLong) }
+    val matrix = buildMatrix((0 until height).map(_ => io.StdIn.readLine().split(' ').toSeq.take(width)), width, height)
+    printMatrix(rotateMatrix(matrix, width, height, rotations), width, height)
   }
 
   def main(args: Array[String]): Unit = {
