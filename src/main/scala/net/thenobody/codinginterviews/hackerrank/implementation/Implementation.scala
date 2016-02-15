@@ -347,27 +347,7 @@ object Implementation {
   }
 
   def matrixRotation(): Unit = {
-    def getDirection(x: Int, y: Int, width: Int, height: Int): (Int, Int) = {
-      val (xHalf, yHalf) = (width / 2.0, height / 2.0)
-      val xMin = 0
-      val xMax = width - 1
-      val yMin = 0
-      val yMax = height - 1
-
-      if (y < yHalf) {                           // upper half
-        if (x == xMin) (0, 1)                     // upper left corner OR bellow upper left corner
-        else if (y == yMin && x == xMax) (-1, 0)  // upper right corner
-        else if (x == xMax) (0, -1)               // below upper right corner
-        else (-1, 0)                              // to the right of upper left corner
-      } else {                                   // lower half
-        if (x == xMax) (0, -1)                    // lower right corner OR above lower right corner
-        else if (y == yMax && x == xMin) (1, 0)   // lower left corner
-        else if (x == xMin) (0, 1)                // above left corner
-        else (1, 0)                               // to the left of lower right corner
-      }
-    }
-
-    def getDirectionLevel(x: Int, y: Int, width: Int, height: Int, offset: Int): (Int, Int) = {
+    def getDirection(x: Int, y: Int, width: Int, height: Int, offset: Int): (Int, Int) = {
       val (xHalf, yHalf) = (width / 2.0, height / 2.0)
       val xMin = offset
       val xMax = width - offset - 1
@@ -387,28 +367,29 @@ object Implementation {
       }
     }
 
+    def getOffset(x: Int, y: Int, width: Int, height: Int): Int = {
+      val flip = (n: Int, half: Int) => if (n < half) n else 2 * half - n - 1
+      Math.min(flip(x, width / 2), flip(y, height / 2))
+    }
+
     type Matrix = Map[(Int, Int), String]
 
     def rotateMatrix(matrix: Matrix, width: Int, height: Int, steps: Int): Matrix = steps match {
       case 0 => matrix
       case _ =>
         rotateMatrix(matrix.map {
-          case ((x, y), value) if x == 0 ||  x == width - 1 || y == 0 || y == height - 1 =>
-            val (xDiff, yDiff) = getDirectionLevel(x, y, width, height, 0)
-            (x + xDiff, y + yDiff) -> value
           case ((x, y), value) =>
-            val (xDiff, yDiff) = getDirectionLevel(x, y, width, height, 1)
+            val offset = getOffset(x, y, width, height)
+            val (xDiff, yDiff) = getDirection(x, y, width, height, offset)
             (x + xDiff, y + yDiff) -> value
         }, width, height, steps - 1)
     }
 
-    def printMatrix(matrix: Map[(Int, Int), String], width: Int, height: Int): Unit = {
-      println(
-        (0 until height).map { y =>
-          (0 until width).map { x => matrix((x, y)) }.mkString(" ")
-        }.mkString("\n")
-      )
-    }
+    def printMatrix(matrix: Map[(Int, Int), String], width: Int, height: Int): Unit = println(
+      (0 until height).map { y =>
+        (0 until width).map { x => matrix((x, y)) }.mkString(" ")
+      }.mkString("\n")
+    )
 
     def buildMatrix(input: Seq[Seq[String]], width: Int, height: Int): Matrix = (for {
       y <- 0 until height
@@ -416,19 +397,23 @@ object Implementation {
     } yield (x, y) -> input(y)(x)).toMap
 
     val input = Seq(
-      Seq("A", "B", "C", "D", "E", "F"),
-      Seq("P", "1", "2", "3", "4", "G"),
-      Seq("O", "8", "7", "6", "5", "H"),
-      Seq("N", "M", "L", "K", "J", "I")
+      Seq("A", "B", "C", "D", "E", "F", "G", "H"),
+      Seq("X", "1", "2", "3", "4", "5", "6", "I"),
+      Seq("W", "7", "Q", "W", "E", "R", "7", "J"),
+      Seq("V", "6", "I", "U", "Y", "T", "8", "K"),
+      Seq("U", "5", "4", "3", "2", "1", "9", "L"),
+      Seq("T", "S", "R", "Q", "P", "O", "N", "M")
     )
 
-    val height = 4
-    val width = 6
+    val width = 8
+    val height = 6
     val original = buildMatrix(input, width, height)
-    val rotated = rotateMatrix(original, width, height, 15)
 
     printMatrix(original, width, height)
     println()
+    printMatrix(original.map { case ((x, y), _) => (x, y) -> getOffset(x, y, width, height).toString }, width, height)
+    println()
+    val rotated = rotateMatrix(original, width, height, 3)
     printMatrix(rotated, width, height)
   }
 
