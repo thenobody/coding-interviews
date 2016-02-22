@@ -59,10 +59,42 @@ object Strings {
     }
   }
 
+  def reverseShuffleMerge(): Unit = {
+    def removeFirst(needle: Char, haystack: Seq[Char]): Seq[Char] = haystack match {
+      case _ if haystack.isEmpty => haystack
+      case head +: tail if head == needle => tail
+      case head +: tail => head +: removeFirst(needle, tail)
+    }
 
+    def isInterspersed(needle: Seq[Char], haystack: Seq[Char]): Boolean = needle match {
+      case Nil => true
+      case head +: tail =>
+        val index = haystack.indexOf(head)
+        if (index < 0) false
+        else isInterspersed(tail, haystack.drop(index + 1))
+    }
+
+    def sub(prev: Seq[Char], remaining: Seq[Char], haystack: Seq[Char]): Option[Seq[Char]] = {
+      if (!isInterspersed(prev.reverse, haystack)) None
+      else if (remaining.isEmpty) Some(prev)
+      else remaining.distinct.foldLeft[Option[Seq[Char]]](None) { case (acc, c) =>
+        if (acc.isDefined) acc
+        else sub(prev :+ c, removeFirst(c, remaining), haystack)
+      }
+    }
+
+    val input = io.StdIn.readLine().toSeq
+    val charCounts = input.groupBy(identity).mapValues(_.length / 2)
+
+    val half = charCounts.keys.toSeq.sorted.flatMap { c => (0 until charCounts(c)).map(_ => c) }
+    println(half)
+    val result = sub(Seq(), half, input).get
+
+    println(result.mkString)
+  }
 
   def main(args: Array[String]): Unit = {
-    gameOfThrones1()
+    reverseShuffleMerge()
   }
 
 }
